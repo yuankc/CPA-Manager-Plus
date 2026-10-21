@@ -2,6 +2,7 @@ import type {
   ApiKeyAlias,
   MonitoringAnalyticsCoverage,
   ResponseHeaderMetadata,
+  MonitoringAnalyticsClientIpStatRow,
 } from '@/services/api/usageService';
 import type { AuthFileItem } from '@/types/authFile';
 import type { Config } from '@/types/config';
@@ -429,6 +430,7 @@ export interface UseMonitoringDataReturn {
   recentFailures: MonitoringFailureRow[];
   accountRows: MonitoringAccountRow[];
   apiKeyRows: MonitoringApiKeyRow[];
+  clientIpRows: MonitoringAnalyticsClientIpStatRow[];
   filterOptions: MonitoringFilterOptions;
   filteredRows: MonitoringEventRow[];
   eventsHasMore: boolean;

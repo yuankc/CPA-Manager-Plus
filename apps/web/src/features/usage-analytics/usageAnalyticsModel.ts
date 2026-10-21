@@ -51,6 +51,7 @@ export type UsageAnalyticsTab =
   | 'trends'
   | 'models'
   | 'apiKeys'
+  | 'clientIps'
   | 'credentials'
   | 'heatmap';
 export type UsageAnalyticsTimeRange = '24h' | 'today' | 'yesterday' | '7d' | '30d' | 'custom';
@@ -497,6 +498,7 @@ export const USAGE_ANALYTICS_TABS: UsageAnalyticsTab[] = [
   'trends',
   'models',
   'apiKeys',
+  'clientIps',
   'credentials',
   'heatmap',
 ];
@@ -831,6 +833,10 @@ export const buildUsageAnalyticsInclude = (
       });
       break;
     case 'apiKeys':
+      include.api_key_stats = true;
+      break;
+    case 'clientIps':
+      include.client_ip_stats = true;
       include.api_key_stats = true;
       break;
     case 'credentials':
@@ -2550,6 +2556,7 @@ export const adaptUsageAnalyticsData = (
     credentialTimeline,
     modelRows,
     apiKeyRows,
+    clientIpRows: data?.client_ip_stats ?? [],
     credentialRows,
     providerRows,
     heatmap: buildUsageHeatmap(data?.heatmap ?? [], apiKeyDisplayMap),

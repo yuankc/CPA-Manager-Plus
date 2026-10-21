@@ -106,6 +106,7 @@ const createPresentationSnapshot = (id: string): MonitoringPresentationSnapshot 
     recentFailures: [],
     accountRows: buildAccountRows([row]),
     apiKeyRows: buildApiKeyRows([row]),
+    clientIpRows: [],
     filterOptions: {
       accountRows: buildAccountRows([row]),
       apiKeyRows: buildApiKeyRows([row]),

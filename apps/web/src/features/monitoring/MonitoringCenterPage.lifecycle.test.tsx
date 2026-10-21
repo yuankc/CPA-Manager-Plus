@@ -185,9 +185,11 @@ vi.mock('@/features/monitoring/hooks/useMonitoringData', async () => {
         recentFailures: [],
         accountRows: [row],
         apiKeyRows: [],
+        clientIpRows: [],
         filterOptions: {
           accountRows: [row],
           apiKeyRows: [],
+          clientIpRows: [],
           providers: ['codex'],
           models: [],
           channels: [],

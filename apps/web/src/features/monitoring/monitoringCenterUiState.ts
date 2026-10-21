@@ -1,4 +1,4 @@
-export type MonitoringDataTab = 'accounts' | 'apiKeys' | 'realtime';
+export type MonitoringDataTab = 'accounts' | 'apiKeys' | 'clientIps' | 'realtime';
 export type MonitoringCenterTimeRange =
   | 'today'
   | 'yesterday'
@@ -12,6 +12,7 @@ export type MonitoringCenterStatusFilter = 'all' | 'success' | 'failed';
 export const MONITORING_DATA_TABS: readonly MonitoringDataTab[] = [
   'accounts',
   'apiKeys',
+  'clientIps',
   'realtime',
 ] as const;
 

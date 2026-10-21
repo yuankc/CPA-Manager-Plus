@@ -15,6 +15,7 @@ func SupportsStatsFilter(filter AnalyticsFilter) bool {
 		len(filter.HeaderErrorCodes) == 0 &&
 		len(filter.HeaderQuotaPlans) == 0 &&
 		len(filter.HeaderTraceIDs) == 0 &&
+		len(filter.ClientIPs) == 0 &&
 		filter.MinLatencyMS == 0 &&
 		strings.TrimSpace(filter.CacheStatus) == ""
 }
@@ -25,7 +26,7 @@ func SupportsStatsFilter(filter AnalyticsFilter) bool {
 // raw usage_events path instead of returning a false cross-field match.
 func SupportsEventProjectionFilter(filter AnalyticsFilter) bool {
 	query := strings.TrimSpace(filter.SearchQuery)
-	return !strings.ContainsAny(query, "%_\x1f")
+	return len(filter.ClientIPs) == 0 && !strings.ContainsAny(query, "%_\x1f")
 }
 
 // PrefersEventProjection identifies event count/page requests that must scan
@@ -72,6 +73,7 @@ func SupportsSelectorFilter(filter AnalyticsFilter) bool {
 		len(filter.HeaderErrorCodes) == 0 &&
 		len(filter.HeaderQuotaPlans) == 0 &&
 		len(filter.HeaderTraceIDs) == 0 &&
+		len(filter.ClientIPs) == 0 &&
 		filter.IncludeFailed &&
 		!filter.FailedOnly &&
 		filter.MinLatencyMS == 0 &&

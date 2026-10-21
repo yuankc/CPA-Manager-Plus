@@ -53,6 +53,8 @@ type Repository interface {
 	CredentialTimelineWithFilter(ctx context.Context, filter AnalyticsFilter, granularity string, location *time.Location) ([]CredentialTimelinePoint, error)
 	APIKeyTimelineWithFilter(ctx context.Context, filter AnalyticsFilter, granularity string, location *time.Location) ([]APIKeyTimelinePoint, error)
 	APIKeyModelStatsWithFilter(ctx context.Context, filter AnalyticsFilter) ([]APIKeyModelStat, error)
+	ClientIPModelStatsWithFilter(ctx context.Context, filter AnalyticsFilter) ([]ClientIPModelStat, error)
+	ClientIPFilterValuesWithFilter(ctx context.Context, filter AnalyticsFilter) ([]string, error)
 	TaskBucketsWithFilter(ctx context.Context, filter AnalyticsFilter) ([]TaskBucket, error)
 	RecentFailuresWithFilter(ctx context.Context, filter AnalyticsFilter, limit int) ([]RecentFailure, error)
 	EventsPageWithFilter(ctx context.Context, filter AnalyticsFilter, beforeMS int64, beforeID int64, limit int) (EventsPage, error)

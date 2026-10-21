@@ -56,6 +56,7 @@ import {
   ApiKeySummaryPanel,
   ApiKeySummaryPanelActions,
 } from '@/features/monitoring/components/ApiKeySummaryPanel';
+import { ClientIpStatsTable } from '@/features/monitoring/components/ClientIpStatsTable';
 import { MonitoringDataPanel } from '@/features/monitoring/components/MonitoringDataPanel';
 import { MonitoringActionBar } from '@/features/monitoring/components/MonitoringActionBar';
 import { MonitoringDatabaseMaintenanceHint } from '@/features/monitoring/components/MonitoringDatabaseMaintenanceHint';
@@ -505,6 +506,7 @@ export function MonitoringCenterPage() {
     coverage: monitoringCoverage,
     accountRows: monitoringAccountRows,
     apiKeyRows: monitoringApiKeyRows,
+    clientIpRows: monitoringClientIpRows,
     filterOptions: monitoringFilterOptions,
     filteredRows,
     eventsHasMore,
@@ -906,6 +908,16 @@ export function MonitoringCenterPage() {
   const scopedSummary = monitoringSummary;
   const accountRows = monitoringAccountRows;
   const apiKeyRows = monitoringApiKeyRows;
+  const clientIpRows = monitoringClientIpRows;
+  const clientIpCount = useMemo(
+    () => clientIpRows.filter((row) => row.client_ip).length,
+    [clientIpRows]
+  );
+  const resolveClientIpApiKeyLabel = useCallback(
+    (hash: string) =>
+      apiKeyRows.find((row) => row.apiKeyHash === hash && row.apiKeyLabel)?.apiKeyLabel ?? '',
+    [apiKeyRows]
+  );
   const { accountCount, apiKeyCount } = useMemo(
     () =>
       resolveMonitoringDimensionCounts({
@@ -1167,6 +1179,18 @@ export function MonitoringCenterPage() {
         badgeTitle: t('monitoring.data_tab_api_keys_badge_title', { count: apiKeyCount }),
       },
       {
+        id: 'clientIps',
+        label: shortLabel(
+          t,
+          'monitoring.data_tab_client_ips_short',
+          'monitoring.data_tab_client_ips'
+        ),
+        fullLabel: t('monitoring.data_tab_client_ips'),
+        icon: 'clientIps',
+        badge: activeDataTab === 'clientIps' ? clientIpCount : null,
+        badgeTitle: t('monitoring.data_tab_client_ips_badge_title', { count: clientIpCount }),
+      },
+      {
         id: 'realtime',
         label: shortLabel(t, 'monitoring.data_tab_realtime_short', 'monitoring.data_tab_realtime'),
         fullLabel: t('monitoring.data_tab_realtime'),
@@ -1179,7 +1203,15 @@ export function MonitoringCenterPage() {
         }),
       },
     ];
-  }, [accountCount, apiKeyCount, scopedFailureCount, scopedSummary.totalCalls, t]);
+  }, [
+    accountCount,
+    activeDataTab,
+    apiKeyCount,
+    clientIpCount,
+    scopedFailureCount,
+    scopedSummary.totalCalls,
+    t,
+  ]);
 
   const handleDataTabChange = useCallback((tab: MonitoringDataTab) => {
     setActiveDataTab(tab);
@@ -1738,6 +1770,10 @@ export function MonitoringCenterPage() {
       return <ApiKeySummaryPanelActions rowCount={apiKeyRows.length} t={t} />;
     }
 
+    if (activeDataTab === 'clientIps') {
+      return null;
+    }
+
     return (
       <RealtimeEventsPanelActions
         rowCount={realtimeLogRows.length}
@@ -2181,6 +2217,19 @@ export function MonitoringCenterPage() {
                 onFocusAccount={focusAccount}
                 onPageChange={handleAccountPageChange}
                 onPageSizeChange={handleAccountPageSizeChange}
+              />
+            );
+          }
+
+          if (tab === 'clientIps') {
+            return (
+              <ClientIpStatsTable
+                rows={clientIpRows}
+                hasPrices={hasPrices}
+                locale={i18n.language}
+                emptyState={renderMonitoringEmptyState()}
+                resolveApiKeyLabel={resolveClientIpApiKeyLabel}
+                t={t}
               />
             );
           }
