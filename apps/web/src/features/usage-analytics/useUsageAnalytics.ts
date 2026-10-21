@@ -805,6 +805,7 @@ export function useUsageAnalytics() {
     timeline: adapted.timeline,
     modelRows: adapted.modelRows,
     apiKeyRows: adapted.apiKeyRows,
+    clientIpRows: adapted.clientIpRows,
     credentialRows: adapted.credentialRows,
     allCredentialRows: adapted.credentialRows,
     providerRows: adapted.providerRows,

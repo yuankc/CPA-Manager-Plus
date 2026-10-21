@@ -132,6 +132,7 @@ export type MonitoringPresentationSnapshot = Pick<
   | 'recentFailures'
   | 'accountRows'
   | 'apiKeyRows'
+  | 'clientIpRows'
   | 'filterOptions'
   | 'filteredRows'
   | 'eventsHasMore'
@@ -868,6 +869,10 @@ export function useMonitoringData({
       sourceInfoMap,
     ]
   );
+  const clientIpRows = useMemo(
+    () => currentAnalyticsData?.client_ip_stats ?? [],
+    [currentAnalyticsData]
+  );
   const apiKeyRows = useMemo(
     () =>
       currentAnalyticsData?.api_key_stats
@@ -980,6 +985,7 @@ export function useMonitoringData({
       recentFailures,
       accountRows,
       apiKeyRows,
+      clientIpRows,
       filterOptions,
       filteredRows,
       eventsHasMore: displayEventsHasMore,
@@ -993,6 +999,7 @@ export function useMonitoringData({
       analytics.lastRefreshedAt,
       accountRows,
       apiKeyRows,
+      clientIpRows,
       channelRows,
       currentAnalyticsData?.coverage,
       displayEventsHasMore,
@@ -1110,6 +1117,7 @@ export function useMonitoringData({
     recentFailures: presentationSnapshot.recentFailures,
     accountRows: presentationSnapshot.accountRows,
     apiKeyRows: presentationSnapshot.apiKeyRows,
+    clientIpRows: presentationSnapshot.clientIpRows,
     filterOptions: presentationSnapshot.filterOptions,
     filteredRows: presentationSnapshot.filteredRows,
     eventsHasMore: presentationSnapshot.eventsHasMore,

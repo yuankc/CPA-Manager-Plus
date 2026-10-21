@@ -25,6 +25,8 @@ import type {
   UsageMaintenanceStatus,
   UsageServiceInfo,
   UsageServiceStatus,
+  MonitoringAnalyticsApiKeyStatRow,
+  MonitoringAnalyticsClientIpStatRow,
 } from '@/services/api/usageService';
 import type {
   CodexInspectionAction,
@@ -4825,6 +4827,7 @@ const buildMonitoringAnalytics = (
     credential_stats: credentialStats,
     credential_timeline: credentialTimeline,
     api_key_stats: apiKeyStats,
+    client_ip_stats: buildDemoClientIpStats(analyticsNow, apiKeyStats),
     ...(request?.include?.api_key_timeline && requestedAPIKeyTimelineHashes.size > 0
       ? { api_key_timeline: apiKeyTimeline }
       : {}),
@@ -7888,4 +7891,107 @@ export const getDemoApiCallResult = (payload: DemoApiCallPayload = {}) => {
     },
     body,
   };
+};
+
+const buildDemoClientIpStats = (
+  now: number,
+  apiKeyStats: MonitoringAnalyticsApiKeyStatRow[]
+): MonitoringAnalyticsClientIpStatRow[] => {
+  const keyHashes = apiKeyStats.map((row) => row.api_key_hash).filter(Boolean);
+  const seeds = [
+    {
+      ip: '203.0.113.24',
+      calls: 6420,
+      failure: 58,
+      tokens: 18_400_000,
+      cost: 96.4,
+      latency: 1420,
+      ageMin: 2,
+      keys: 3,
+    },
+    {
+      ip: '198.51.100.17',
+      calls: 3810,
+      failure: 112,
+      tokens: 9_850_000,
+      cost: 51.2,
+      latency: 1780,
+      ageMin: 6,
+      keys: 2,
+    },
+    {
+      ip: '192.0.2.88',
+      calls: 1290,
+      failure: 14,
+      tokens: 2_960_000,
+      cost: 15.7,
+      latency: 1210,
+      ageMin: 19,
+      keys: 1,
+    },
+    {
+      ip: '2001:db8::42',
+      calls: 540,
+      failure: 37,
+      tokens: 1_180_000,
+      cost: 6.3,
+      latency: 2240,
+      ageMin: 44,
+      keys: 1,
+    },
+    {
+      ip: '',
+      calls: 96,
+      failure: 3,
+      tokens: 210_000,
+      cost: 1.1,
+      latency: 1650,
+      ageMin: 180,
+      keys: 1,
+    },
+  ];
+  const models = ['gpt-5.4', 'claude-sonnet-4-6', 'gemini-2.5-pro'];
+  return seeds.map((seed, index) => {
+    const successCalls = seed.calls - seed.failure;
+    const input = Math.round(seed.tokens * 0.72);
+    const output = seed.tokens - input;
+    return {
+      id: seed.ip,
+      client_ip: seed.ip,
+      calls: seed.calls,
+      success_calls: successCalls,
+      failure_calls: seed.failure,
+      success_rate: successCalls / seed.calls,
+      input_tokens: input,
+      output_tokens: output,
+      cached_tokens: Math.round(input * 0.3),
+      cache_read_tokens: Math.round(input * 0.3),
+      cache_creation_tokens: 0,
+      total_tokens: seed.tokens,
+      cost: seed.cost,
+      average_latency_ms: seed.latency,
+      last_seen_ms: now - seed.ageMin * 60_000,
+      api_key_hashes: keyHashes.slice(index % 2, (index % 2) + seed.keys),
+      models: models.slice(0, Math.max(1, 3 - (index % 3))).map((model, modelIndex) => {
+        const share = modelIndex === 0 ? 0.6 : 0.4 / Math.max(1, 2 - (index % 3));
+        const calls = Math.round(seed.calls * share);
+        const failures = Math.round(seed.failure * share);
+        return {
+          model,
+          calls,
+          success_calls: calls - failures,
+          failure_calls: failures,
+          success_rate: calls > 0 ? (calls - failures) / calls : 0,
+          input_tokens: Math.round(input * share),
+          output_tokens: Math.round(output * share),
+          cached_tokens: 0,
+          cache_read_tokens: 0,
+          cache_creation_tokens: 0,
+          total_tokens: Math.round(seed.tokens * share),
+          cost: Number((seed.cost * share).toFixed(2)),
+          last_seen_ms: now - seed.ageMin * 60_000,
+        };
+      }),
+    };
+  });
 };

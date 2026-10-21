@@ -125,6 +125,7 @@ func SupportsAnalyticsFilter(filter store.AnalyticsFilter) bool {
 		len(filter.HeaderErrorCodes) == 0 &&
 		len(filter.HeaderQuotaPlans) == 0 &&
 		len(filter.HeaderTraceIDs) == 0 &&
+		len(filter.ClientIPs) == 0 &&
 		filter.MinLatencyMS == 0 &&
 		strings.TrimSpace(filter.CacheStatus) == ""
 }

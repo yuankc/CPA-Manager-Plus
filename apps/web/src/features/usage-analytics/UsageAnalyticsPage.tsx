@@ -100,6 +100,7 @@ import {
   formatUsageDurationMs,
 } from './usageAnalyticsPresentation';
 import styles from './UsageAnalyticsPage.module.scss';
+import { ClientIpStatsTable } from '@/features/monitoring/components/ClientIpStatsTable';
 
 const trendMetricOptions: Array<{ value: UsageTrendMetricKey; labelKey: string }> = [
   { value: 'requestCount', labelKey: 'usage_analytics.trend_metric_requestCount' },
@@ -3347,6 +3348,24 @@ function UsageAnalyticsPageInner() {
             </div>
           </section>
         </>
+      ) : null}
+
+      {usage.activeTab === 'clientIps' ? (
+        <section className={styles.tablePanel}>
+          <div className={styles.panelHeader}>
+            <div>
+              <h2>{t('client_ip_stats.title')}</h2>
+              <p>{t('client_ip_stats.description')}</p>
+            </div>
+          </div>
+          <ClientIpStatsTable
+            rows={usage.clientIpRows}
+            hasPrices={usage.clientIpRows.some((row) => row.cost > 0)}
+            locale={i18n.language}
+            resolveApiKeyLabel={(hash) => resolveUsageApiKeyLabel(hash, usage.apiKeyDisplayMap)}
+            t={t}
+          />
+        </section>
       ) : null}
 
       {usage.activeTab === 'credentials' ? (

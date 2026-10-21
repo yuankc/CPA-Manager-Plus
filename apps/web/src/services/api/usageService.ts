@@ -1014,6 +1014,7 @@ export interface MonitoringAnalyticsFilters {
   header_error_codes?: string[];
   header_quota_plans?: string[];
   header_trace_ids?: string[];
+  client_ips?: string[];
   include_failed?: boolean;
   failed_only?: boolean;
   min_latency_ms?: number;
@@ -1048,6 +1049,7 @@ export interface MonitoringAnalyticsInclude {
   credential_timeline?: boolean;
   api_key_timeline?: boolean;
   api_key_stats?: boolean;
+  client_ip_stats?: boolean;
   filter_options?: boolean;
   filter_selectors?: boolean;
   heatmap?: boolean;
@@ -1798,6 +1800,26 @@ export interface MonitoringAnalyticsApiKeyStatRow {
   contexts?: MonitoringAnalyticsApiKeyContextRow[];
 }
 
+export interface MonitoringAnalyticsClientIpStatRow {
+  id: string;
+  client_ip: string;
+  calls: number;
+  success_calls: number;
+  failure_calls: number;
+  success_rate: number;
+  input_tokens: number;
+  output_tokens: number;
+  cached_tokens: number;
+  cache_read_tokens: number;
+  cache_creation_tokens: number;
+  total_tokens: number;
+  cost: number;
+  average_latency_ms: number | null;
+  last_seen_ms: number;
+  api_key_hashes?: string[];
+  models?: MonitoringAnalyticsAccountModelStatRow[];
+}
+
 export interface MonitoringAnalyticsApiKeyContextRow {
   id: string;
   account_snapshot?: string;
@@ -1835,6 +1857,7 @@ export interface MonitoringAnalyticsFilterOptions {
   header_error_codes?: string[];
   header_quota_plans?: string[];
   header_trace_ids?: string[];
+  client_ips?: string[];
 }
 
 export interface MonitoringAnalyticsTaskBucketRow {
@@ -2147,6 +2170,7 @@ export interface MonitoringAnalyticsResponse {
   credential_timeline?: MonitoringAnalyticsCredentialTimelinePoint[];
   api_key_timeline?: MonitoringAnalyticsApiKeyTimelinePoint[];
   api_key_stats?: MonitoringAnalyticsApiKeyStatRow[];
+  client_ip_stats?: MonitoringAnalyticsClientIpStatRow[];
   filter_options?: MonitoringAnalyticsFilterOptions;
   task_buckets?: MonitoringAnalyticsTaskBucketRow[];
   recent_failures?: MonitoringAnalyticsRecentFailure[];

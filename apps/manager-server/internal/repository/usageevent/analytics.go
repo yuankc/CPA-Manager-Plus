@@ -57,6 +57,7 @@ type AnalyticsFilter struct {
 	HeaderErrorCodes []string
 	HeaderQuotaPlans []string
 	HeaderTraceIDs   []string
+	ClientIPs        []string
 }
 
 var analyticsSearchTextColumns = usageprojection.SearchColumns
@@ -3013,6 +3014,7 @@ func analyticsWhere(filter AnalyticsFilter) (string, []any) {
 	addInCondition("header_error_code", filter.HeaderErrorCodes)
 	addInCondition("header_quota_plan_type", filter.HeaderQuotaPlans)
 	addInCondition("header_trace_id", filter.HeaderTraceIDs)
+	addInCondition(clientIPExpr, filter.ClientIPs)
 	if !filter.IncludeFailed {
 		conditions = append(conditions, "failed = 0")
 	}

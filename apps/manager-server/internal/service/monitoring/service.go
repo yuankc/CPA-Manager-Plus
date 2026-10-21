@@ -140,6 +140,7 @@ type Filters struct {
 	HeaderErrorCodes []string `json:"header_error_codes"`
 	HeaderQuotaPlans []string `json:"header_quota_plans"`
 	HeaderTraceIDs   []string `json:"header_trace_ids"`
+	ClientIPs        []string `json:"client_ips"`
 	IncludeFailed    *bool    `json:"include_failed"`
 	FailedOnly       bool     `json:"failed_only"`
 	MinLatencyMS     int64    `json:"min_latency_ms"`
@@ -162,6 +163,7 @@ type Include struct {
 	CredentialTimeline bool              `json:"credential_timeline"`
 	APIKeyTimeline     bool              `json:"api_key_timeline"`
 	APIKeyStats        bool              `json:"api_key_stats"`
+	ClientIPStats      bool              `json:"client_ip_stats"`
 	FilterOptions      bool              `json:"filter_options"`
 	FilterSelectors    bool              `json:"filter_selectors"`
 	Heatmap            bool              `json:"heatmap"`
@@ -204,6 +206,7 @@ type Response struct {
 	CredentialTimeline []CredentialTimelinePoint `json:"credential_timeline,omitempty"`
 	APIKeyTimeline     []APIKeyTimelinePoint     `json:"api_key_timeline,omitempty"`
 	APIKeyStats        []APIKeyStatRow           `json:"api_key_stats,omitempty"`
+	ClientIPStats      []ClientIPStatRow         `json:"client_ip_stats,omitempty"`
 	FilterOptions      *FilterOptions            `json:"filter_options,omitempty"`
 	TaskBuckets        []TaskBucketRow           `json:"task_buckets,omitempty"`
 	RecentFailures     []RecentFailure           `json:"recent_failures,omitempty"`
@@ -774,6 +777,7 @@ type FilterOptions struct {
 	HeaderErrorCodes []string          `json:"header_error_codes,omitempty"`
 	HeaderQuotaPlans []string          `json:"header_quota_plans,omitempty"`
 	HeaderTraceIDs   []string          `json:"header_trace_ids,omitempty"`
+	ClientIPs        []string          `json:"client_ips,omitempty"`
 }
 
 type TaskBucketRow struct {
@@ -1059,6 +1063,7 @@ func (s *Service) analytics(ctx context.Context, req Request) (Response, error) 
 	accountStatsDerived := false
 	var apiKeyStats []store.APIKeyModelStat
 	apiKeyStatsDerived := false
+	var clientIPStats []store.ClientIPModelStat
 	deriveChannelStatsFromAccounts := req.Include.ChannelShare && req.Include.AccountStats
 	needsModelStats := req.Include.Summary || req.Include.ModelShare || req.Include.ModelStats
 	if needsModelStats {
@@ -1159,6 +1164,14 @@ func (s *Service) analytics(ctx context.Context, req Request) (Response, error) 
 		queries.Go(func(queryCtx context.Context) error {
 			var queryErr error
 			apiKeyStats, apiKeyStatsDerived, queryErr = s.apiKeyModelStatsWithSource(queryCtx, filter)
+			return queryErr
+		})
+	}
+
+	if req.Include.ClientIPStats {
+		queries.Go(func(queryCtx context.Context) error {
+			var queryErr error
+			clientIPStats, queryErr = s.store.ClientIPModelStatsWithFilter(queryCtx, filter)
 			return queryErr
 		})
 	}
@@ -1435,6 +1448,9 @@ func (s *Service) analytics(ctx context.Context, req Request) (Response, error) 
 	if req.Include.APIKeyStats {
 		response.APIKeyStats = buildAPIKeyStats(apiKeyStats, prices)
 	}
+	if req.Include.ClientIPStats {
+		response.ClientIPStats = buildClientIPStats(clientIPStats, prices)
+	}
 	filterOptionsDerived := false
 	if req.Include.FilterSelectors {
 		response.FilterOptions = selectorOptions
@@ -1649,7 +1665,8 @@ func buildAnalyticsCoverage(
 		}
 		identityMetricsRequireRaw := (req.Include.ChannelShare && !sources.ChannelStats) ||
 			(req.Include.AccountStats && !sources.AccountStats) ||
-			(req.Include.APIKeyStats && !sources.APIKeyStats)
+			(req.Include.APIKeyStats && !sources.APIKeyStats) ||
+			req.Include.ClientIPStats
 		if identityMetricsRequireRaw {
 			appendLimitation("identity_metrics_require_raw_events")
 		}
@@ -2167,6 +2184,7 @@ func buildFilter(req Request) store.AnalyticsFilter {
 		HeaderErrorCodes: req.Filters.HeaderErrorCodes,
 		HeaderQuotaPlans: req.Filters.HeaderQuotaPlans,
 		HeaderTraceIDs:   req.Filters.HeaderTraceIDs,
+		ClientIPs:        req.Filters.ClientIPs,
 		IncludeFailed:    includeFailed,
 		FailedOnly:       req.Filters.FailedOnly,
 		MinLatencyMS:     req.Filters.MinLatencyMS,
@@ -2247,6 +2265,11 @@ func (s *Service) filterOptionsWithSource(
 		}
 	}
 
+	clientIPs, err := s.clientIPOptionValues(ctx, optionFilter)
+	if err != nil {
+		return nil, false, err
+	}
+
 	options := &FilterOptions{
 		AccountStats:     buildAccountStats(accountStats, prices),
 		APIKeyStats:      buildAPIKeyStats(apiKeyStats, prices),
@@ -2260,6 +2283,7 @@ func (s *Service) filterOptionsWithSource(
 		HeaderErrorCodes: optionValues.HeaderErrorCodes,
 		HeaderQuotaPlans: optionValues.HeaderQuotaPlans,
 		HeaderTraceIDs:   optionValues.HeaderTraceIDs,
+		ClientIPs:        clientIPs,
 	}
 	derived := accountStatsDerived && apiKeyStatsDerived && channelStatsDerived &&
 		modelStatsDerived && optionValuesDerived
@@ -2281,6 +2305,7 @@ func filterOptionsMatchMainScope(filter store.AnalyticsFilter) bool {
 		len(filter.HeaderErrorCodes) == 0 &&
 		len(filter.HeaderQuotaPlans) == 0 &&
 		len(filter.HeaderTraceIDs) == 0 &&
+		len(filter.ClientIPs) == 0 &&
 		filter.IncludeFailed &&
 		!filter.FailedOnly &&
 		filter.MinLatencyMS == 0 &&
@@ -2298,7 +2323,12 @@ func (s *Service) filterSelectorsWithSource(ctx context.Context, filter store.An
 		}
 	}
 	accountStats := buildAccountSelectorStats(values)
+	clientIPs, err := s.clientIPOptionValues(ctx, optionFilter)
+	if err != nil {
+		return nil, false, err
+	}
 	return &FilterOptions{
+		ClientIPs:    clientIPs,
 		Models:       values.Models,
 		APIKeyHashes: values.APIKeyHashes,
 		Providers:    values.Providers,
@@ -2598,6 +2628,7 @@ func filterOptionsBaseFilter(filter store.AnalyticsFilter) store.AnalyticsFilter
 	optionFilter.HeaderErrorCodes = nil
 	optionFilter.HeaderQuotaPlans = nil
 	optionFilter.HeaderTraceIDs = nil
+	optionFilter.ClientIPs = nil
 	optionFilter.IncludeFailed = true
 	optionFilter.FailedOnly = false
 	optionFilter.MinLatencyMS = 0
